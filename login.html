@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ingresar · Hub de Agentes POW</title>
+<style>
+  :root {
+    --pow-black: #020001;
+    --pow-orange: #FF722D;
+    --pow-yellow: #FFEB82;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pow-black);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  .box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 340px;
+  }
+  .box h1 {
+    margin: 0 0 4px;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--pow-black);
+  }
+  .box h1 span { color: var(--pow-orange); }
+  .box p {
+    margin: 0 0 22px;
+    font-size: 13px;
+    color: #888;
+  }
+  input[type="password"] {
+    width: 100%;
+    padding: 11px 13px;
+    font-size: 14px;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  input[type="password"]:focus {
+    outline: none;
+    border-color: var(--pow-orange);
+  }
+  button {
+    width: 100%;
+    padding: 11px;
+    background: var(--pow-black);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: #222; }
+  .error {
+    color: #d64545;
+    font-size: 12px;
+    margin: -4px 0 12px;
+    display: none;
+  }
+  .error.show { display: block; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>Hub de <span>Agentes</span></h1>
+    <p>POW · ingresá para administrar</p>
+    <form id="loginForm">
+      <input type="password" id="password" placeholder="Contraseña" autofocus />
+      <div class="error" id="error">Contraseña incorrecta</div>
+      <button type="submit">Ingresar</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorEl = document.getElementById('error');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.classList.remove('show');
+      const password = document.getElementById('password').value;
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      if (res.ok) {
+        window.location.href = '/';
+      } else {
+        errorEl.classList.add('show');
+      }
+    });
+  </script>
+</body>
+</html>

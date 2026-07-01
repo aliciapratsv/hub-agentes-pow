@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hub de Agentes · POW</title>
+<style>
+  :root {
+    --pow-black: #020001;
+    --pow-orange: #FF722D;
+    --pow-yellow: #FFEB82;
+    --pow-gray: #6b6b6b;
+    --pow-bg: #f7f6f4;
+    --pow-card: #ffffff;
+    --pow-border: #e8e6e2;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: var(--pow-bg);
+    color: var(--pow-black);
+  }
+
+  header {
+    background: var(--pow-black);
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+
+  header h1 span {
+    color: var(--pow-orange);
+  }
+
+  header p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #999;
+  }
+
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  .agent-card {
+    background: var(--pow-card);
+    border: 1px solid var(--pow-border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: box-shadow 0.15s ease;
+  }
+
+  .agent-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+
+  .agent-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .agent-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .agent-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--pow-orange);
+    flex-shrink: 0;
+  }
+
+  .agent-dot.off {
+    background: #ccc;
+  }
+
+  .agent-title h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .agent-card p.desc {
+    margin: 6px 0 0 18px;
+    font-size: 13px;
+    color: var(--pow-gray);
+  }
+
+  /* Toggle switch */
+  .switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #ddd; border-radius: 24px; transition: 0.2s;
+  }
+  .slider::before {
+    content: ""; position: absolute; height: 18px; width: 18px;
+    left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.2s;
+  }
+  input:checked + .slider { background: var(--pow-orange); }
+  input:checked + .slider::before { transform: translateX(20px); }
+
+  .agent-body {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--pow-border);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+
+  .field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pow-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .field input[type="time"],
+  .field input[type="number"],
+  .field textarea {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 11px;
+    border: 1px solid var(--pow-border);
+    border-radius: 8px;
+    background: #fcfcfb;
+    color: var(--pow-black);
+  }
+
+  .field textarea { resize: vertical; min-height: 64px; }
+
+  .field input:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--pow-orange);
+  }
+
+  .field .hint { font-size: 11px; color: #aaa; }
+
+  .actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  button.save {
+    background: var(--pow-black);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.save:hover { background: #222; }
+
+  button.history-toggle {
+    background: none;
+    border: none;
+    color: var(--pow-orange);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .save-status {
+    font-size: 12px;
+    color: #2a9d5c;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .save-status.show { opacity: 1; }
+
+  .history {
+    grid-column: 1 / -1;
+    display: none;
+    margin-top: 8px;
+    border-top: 1px dashed var(--pow-border);
+    padding-top: 12px;
+  }
+  .history.open { display: block; }
+
+  .history-item {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f2f0ec;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--pow-black);
+    flex-shrink: 0;
+  }
+  .badge.overdue { background: var(--pow-yellow); }
+  .badge.mention { background: var(--pow-orange); color: #fff; }
+
+  .empty-history { font-size: 12px; color: #aaa; padding: 6px 0; }
+
+  .loading { text-align: center; color: #aaa; padding: 60px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Hub de <span>Agentes</span></h1>
+    <p>POW · panel de administración</p>
+  </div>
+  <button id="logoutBtn" style="background:none;border:1px solid #444;color:#ccc;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Salir</button>
+</header>
+
+<main id="app">
+  <div class="loading">Cargando agentes…</div>
+</main>
+
+<script>
+const app = document.getElementById('app');
+
+function badgeLabel(type) {
+  return type === 'overdue' ? 'VENCIDA' : 'MENCIÓN';
+}
+
+function renderAgent(agent) {
+  const c = agent.config;
+  const emails = (c.teamEmails || []).join('\n');
+
+  return `
+    <div class="agent-card" data-agent="${agent.id}">
+      <div class="agent-head">
+        <div>
+          <div class="agent-title">
+            <span class="agent-dot ${c.enabled ? '' : 'off'}"></span>
+            <h2>${agent.name}</h2>
+          </div>
+          <p class="desc">${agent.description}</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" class="field-enabled" ${c.enabled ? 'checked' : ''} />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="agent-body">
+        <div class="field">
+          <label>Horario</label>
+          <input type="time" class="field-schedule" value="${c.schedule}" />
+          <span class="hint">Hora local Argentina</span>
+        </div>
+
+        <div class="field">
+          <label>Horas sin respuesta para alertar</label>
+          <input type="number" class="field-alertHours" min="1" value="${c.alertHours}" />
+          <span class="hint">Horas antes de notificar</span>
+        </div>
+
+        <div class="field full">
+          <label>Emails del equipo</label>
+          <textarea class="field-teamEmails" placeholder="un email por línea">${emails}</textarea>
+          <span class="hint">Un email por línea</span>
+        </div>
+
+        <div class="field full">
+          <label>Mensaje personalizado (opcional)</label>
+          <textarea class="field-customMessage" placeholder="Se muestra al final del mail">${c.customMessage || ''}</textarea>
+        </div>
+
+        <div class="actions">
+          <button class="save">Guardar cambios</button>
+          <span class="save-status">Guardado ✓</span>
+          <button class="history-toggle" style="margin-left:auto;">Ver historial</button>
+        </div>
+
+        <div class="history">
+          <div class="history-list">Cargando historial…</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function loadAgents() {
+  const res = await fetch('/api/config');
+  const data = await res.json();
+  app.innerHTML = data.agents.map(renderAgent).join('');
+  data.agents.forEach(attachHandlers);
+}
+
+function attachHandlers(agent) {
+  const card = document.querySelector(`.agent-card[data-agent="${agent.id}"]`);
+
+  card.querySelector('.save').addEventListener('click', async () => {
+    const body = {
+      enabled: card.querySelector('.field-enabled').checked,
+      schedule: card.querySelector('.field-schedule').value,
+      alertHours: parseInt(card.querySelector('.field-alertHours').value, 10),
+      teamEmails: card.querySelector('.field-teamEmails').value
+        .split('\n')
+        .map((e) => e.trim())
+        .filter(Boolean),
+      customMessage: card.querySelector('.field-customMessage').value,
+    };
+
+    await fetch(`/api/config?agent=${agent.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    card.querySelector('.agent-dot').classList.toggle('off', !body.enabled);
+    const status = card.querySelector('.save-status');
+    status.classList.add('show');
+    setTimeout(() => status.classList.remove('show'), 2000);
+  });
+
+  card.querySelector('.field-enabled').addEventListener('change', (e) => {
+    card.querySelector('.agent-dot').classList.toggle('off', !e.target.checked);
+  });
+
+  const historyToggle = card.querySelector('.history-toggle');
+  const historyBox = card.querySelector('.history');
+  let loaded = false;
+
+  historyToggle.addEventListener('click', async () => {
+    historyBox.classList.toggle('open');
+    if (historyBox.classList.contains('open')) {
+      historyToggle.textContent = 'Ocultar historial';
+      if (!loaded) {
+        const res = await fetch(`/api/config?agent=${agent.id}&log=1`);
+        const data = await res.json();
+        const list = card.querySelector('.history-list');
+        if (!data.log || data.log.length === 0) {
+          list.innerHTML = '<div class="empty-history">Sin alertas registradas todavía.</div>';
+        } else {
+          list.innerHTML = data.log
+            .map(
+              (a) => `
+              <div class="history-item">
+                <span class="badge ${a.type}">${badgeLabel(a.type)}</span>
+                <span><strong>${a.assignee}</strong> · ${a.taskName} · ${a.detail}</span>
+              </div>`
+            )
+            .join('');
+        }
+        loaded = true;
+      }
+    } else {
+      historyToggle.textContent = 'Ver historial';
+    }
+  });
+}
+
+loadAgents();
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+});
+</script>
+
+</body>
+</html>
