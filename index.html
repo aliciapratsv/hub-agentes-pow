@@ -236,6 +236,62 @@
   .empty-history { font-size: 12px; color: #aaa; padding: 6px 0; }
 
   .loading { text-align: center; color: #aaa; padding: 60px 0; font-size: 14px; }
+
+  /* Vista de menú (lista de agentes) */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .menu-card {
+    background: var(--pow-card);
+    border: 1px solid var(--pow-border);
+    border-radius: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, transform 0.1s ease;
+  }
+
+  .menu-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+  }
+
+  .menu-card .agent-title {
+    justify-content: space-between;
+  }
+
+  .menu-card .status-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--pow-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .menu-card .status-label.on { color: var(--pow-orange); }
+
+  .menu-card .desc {
+    margin: 8px 0 0 18px;
+    font-size: 13px;
+    color: var(--pow-gray);
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--pow-gray);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 18px;
+  }
+  .back-btn:hover { color: var(--pow-black); }
 </style>
 </head>
 <body>
@@ -254,16 +310,45 @@
 
 <script>
 const app = document.getElementById('app');
+let agentsData = [];
 
 function badgeLabel(type) {
   return type === 'overdue' ? 'VENCIDA' : 'MENCIÓN';
 }
 
-function renderAgent(agent) {
+// --- Vista 1: menú con todos los agentes ---
+function renderMenuCard(agent) {
+  const c = agent.config;
+  return `
+    <div class="menu-card" data-agent="${agent.id}">
+      <div class="agent-title">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="agent-dot ${c.enabled ? '' : 'off'}"></span>
+          <h2>${agent.name}</h2>
+        </div>
+        <span class="status-label ${c.enabled ? 'on' : ''}">${c.enabled ? 'Activo' : 'Apagado'}</span>
+      </div>
+      <p class="desc">${agent.description}</p>
+    </div>
+  `;
+}
+
+function renderMenu() {
+  app.innerHTML = `<div class="menu-grid">${agentsData.map(renderMenuCard).join('')}</div>`;
+  agentsData.forEach((agent) => {
+    document
+      .querySelector(`.menu-card[data-agent="${agent.id}"]`)
+      .addEventListener('click', () => renderDetail(agent.id));
+  });
+}
+
+// --- Vista 2: detalle/configuración de un agente ---
+function renderAgentCard(agent) {
   const c = agent.config;
   const emails = (c.teamEmails || []).join('\n');
 
   return `
+    <button class="back-btn">← Volver a agentes</button>
     <div class="agent-card" data-agent="${agent.id}">
       <div class="agent-head">
         <div>
@@ -317,11 +402,18 @@ function renderAgent(agent) {
   `;
 }
 
+function renderDetail(agentId) {
+  const agent = agentsData.find((a) => a.id === agentId);
+  app.innerHTML = renderAgentCard(agent);
+  document.querySelector('.back-btn').addEventListener('click', renderMenu);
+  attachHandlers(agent);
+}
+
 async function loadAgents() {
   const res = await fetch('/api/config');
   const data = await res.json();
-  app.innerHTML = data.agents.map(renderAgent).join('');
-  data.agents.forEach(attachHandlers);
+  agentsData = data.agents;
+  renderMenu();
 }
 
 function attachHandlers(agent) {
@@ -345,6 +437,7 @@ function attachHandlers(agent) {
       body: JSON.stringify(body),
     });
 
+    agent.config = { ...agent.config, ...body };
     card.querySelector('.agent-dot').classList.toggle('off', !body.enabled);
     const status = card.querySelector('.save-status');
     status.classList.add('show');
